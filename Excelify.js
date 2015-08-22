@@ -1,7 +1,7 @@
 /*jshint expr:true*/
 /*
- * Excelify by Sam Larison
- * transform selection of input elements into Excel-like spreadsheet with undo functionality
+ * Xcelify by Sam Larison
+ * transform selection of input elements into Excel-like spreadsheet with undo functionality - Excelify!
  * features: spreadsheet copy, cut, paste, multi-select, undo, redo, clear multiple, enter key move to next cell in selection
 */
 var Excelify = function(startupOptions){
