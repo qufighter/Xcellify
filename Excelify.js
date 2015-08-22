@@ -85,7 +85,7 @@ var Excelify = function(startupOptions){
     this.resetState();
     // without rows we can still build the index from cells using an offset position helper function
     var rows = this.containerElm.querySelectorAll(this.rowSelector), cells, cellContainer, colHeadings=[], rowHeadings=[], rheading, cheadings;
-    if( this.headingQuerySelector ){
+    if( this.headingQuerySelector && rows[0] ){
       cheadings = rows[0].querySelectorAll(this.headingQuerySelector);
       for( c=0, x=0, cl=cheadings.length; c<cl; c++ ){
         if( this.skipInvisibleCells && !this.elementIsVisible(cheadings[c]) ) continue;
@@ -144,6 +144,7 @@ var Excelify = function(startupOptions){
   };
 
   this.keyboardDnEvents = function(ev){
+    if( !this.elementIsVisible(this.containerElm) || this.totalDimensions.x < 0 || this.totalDimensions.y < 0 ) return;
     if( ev.metaKey ){ // command/control
       switch(ev.keyCode){
         case 67: // C key - Copy

@@ -98,6 +98,8 @@ body{font-family:sans-serif;}
 
 		function testStart(){
 			var conatinerElm = document.getElementById(containerId);
+
+			//test commenting this out and see how it works
 			createTestFields(conatinerElm);
 
 			excelController = new Excelify({
@@ -126,6 +128,7 @@ body{font-family:sans-serif;}
 	<div id="excelTable"></div>
 
 	<div id="copyArea" style="display:none;position:fixed;top:25%;left:25%;right:25%;width:50%;opacity:1.0;background-color:white;padding:15px;border:1px solid black;box-shadow:3px 3px 3px black;">
+		<span style="float:right">X (ctrl)</span>
 		<div>Copy or paste now C Copy - P Paste - Z Undo - Shift Z Redo</div>
 		<!-- please note clipboard state and row/col search current size may be currently incompatible - be careful not to loose states -->
 		<textarea style="width:100%;height:150px;"></textarea>
