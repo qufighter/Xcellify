@@ -286,6 +286,7 @@ var Excelify = function(startupOptions){
   };
 
   this.mouseMovedProcessor = function(evcell){
+    if( !evcell ) return;
     var currentPosition;
     if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
       if( evcell.className.indexOf(this.headingClassName) ){
@@ -306,7 +307,7 @@ var Excelify = function(startupOptions){
   this.findAppropriateEventTarget = function(ev){
     var evcell = ev.target, evinput = ev.target;
     if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
-      evinput = evcell.querySelector(this.cellInputQuerySelector);
+      evinput = evcell.querySelector(this.cellInputQuerySelector) || evcell.parentNode.querySelector(this.cellInputQuerySelector);
       if( !evinput ){
         if( !(evcell = this.descendentOfClass(evcell, this.headingClassName)) ){
             this.hideCurrentSelection();

@@ -7,7 +7,7 @@ body{font-family:sans-serif;}
 .btn:hover{background-color:#AAA;}
 .pointer{cursor:pointer;}
 .row{white-space: nowrap;}
-.cell{display:inline-block;border:2px solid #999;width:150px;min-height:24px;max-height:24px;height:24px;vertical-align: top;}
+.cell{display:inline-block;border:2px solid #999;width:150px;min-height:24px;max-height:24px;height:24px;vertical-align: top;position:relative;}
 .cell input{border:none;padding:5px;width:100%;}
 .cellheading{font-weight:bold;}
 </style>
@@ -45,14 +45,23 @@ body{font-family:sans-serif;}
 
 				for( c=0; c<cols; c++ ){
 					var style='';
+					var cellElements=[
+						Cr.elm('input',{class:'cellinput',type:'text', value: "row"+r+"-col"+c})
+					];
+
 					if( c==3 ){
 						//style='display:none;';
+						cellElements.push(
+							Cr.elm('span',{style:'position:absolute;top:2px;right:3px;background-color:light-grey;',event:['click',gotClicked]},[Cr.txt('Edit')])
+						);
 					}
-					Cr.elm('div',{class:"cell excelcell", style:style, 'data-col-search':headingText.substr(c,3)},[
-						Cr.elm('input',{class:'cellinput',type:'text', value: "row"+r+"-col"+c})
-					],rowElm);
+					Cr.elm('div',{class:"cell excelcell", style:style, 'data-col-search':headingText.substr(c,3)},cellElements,rowElm);
 				}
 			}
+		}
+
+		function gotClicked(){
+			alert('got clicked');
 		}
 
 		function selectColumn(ev){
