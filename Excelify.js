@@ -232,12 +232,10 @@ var Excelify = function(startupOptions){
   };
 
   this.mouseDownContainer = function(ev){
-    var evcell = ev.target;
-    if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
-      if( evcell.className.indexOf(this.headingClassName) < 0 ){
-          this.hideCurrentSelection();
-          return;
-      }
+    var evcell = this.findAppropriateEventTarget(ev);
+    if( !evcell ){
+      this.hideCurrentSelection();
+      return;
     }
     if( document.releaseCapture ){
       setTimeout(function(){ // Firefox support
@@ -251,6 +249,7 @@ var Excelify = function(startupOptions){
       this.singleCellEditingMode = true;
     }
     this.activeCellIndex = this.cellPosition(evcell);
+    this.mouseMovedProcessor(evcell);
     this.mouseMoveContainer(ev);
   };
 
@@ -281,24 +280,50 @@ var Excelify = function(startupOptions){
         this.isDragging = false; // we cancel the drag if we are back over container but the mouse button is not down
         return;
       }
-      var evcell = ev.target, evinput = ev.target, currentPosition;
-      if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
-        evinput = evcell.querySelector(this.cellInputQuerySelector);
-        if( !evinput ){
-          if( evcell.className.indexOf(this.headingClassName) ){
-            currentPosition = this.cellPosition(evcell);
-            this.selectBoxedCells(this.dragOrigin, currentPosition);
-          }
-          return; // in case user is still dragging, do not cancel until the mouse returns
-        }
+      this.mouseMovedProcessor(this.findAppropriateEventTarget(ev));
+    }
+  };
+
+  this.mouseMovedProcessor = function(evcell){
+    var currentPosition;
+    if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
+      if( evcell.className.indexOf(this.headingClassName) ){
+        currentPosition = this.cellPosition(evcell);
+        this.selectBoxedCells(this.dragOrigin, currentPosition);
       }
-      currentPosition = this.cellPosition(evinput);
+      return; // in case user is still dragging, do not cancel until the mouse returns
+    }else{
+      currentPosition = this.cellPosition(evcell);
       if( this.singleCellEditingMode && !this.pointsEqual(currentPosition, this.activeCellIndex) ){
         this.singleCellEditingMode=false; // so much for single cell editing mode, the active cell has changed
       }else{
         this.boxCells(this.dragOrigin, currentPosition); // if single editing this is superfluous
       }
     }
+  };
+
+  this.findAppropriateEventTarget = function(ev){
+    var evcell = ev.target, evinput = ev.target;
+    if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
+      evinput = evcell.querySelector(this.cellInputQuerySelector);
+      if( !evinput ){
+        if( !(evcell = this.descendentOfClass(evcell, this.headingClassName)) ){
+            this.hideCurrentSelection();
+            return;
+        }
+      }else{
+        evcell = evinput;
+      }
+    }
+    return evcell;
+  };
+
+  this.descendentOfClass = function(child, search){ // does this function exist already
+    while( child && child.className.indexOf(this.headingClassName) < 0  ){
+      child = child.parentNode;
+      child = child.className ? child : false;
+    }
+    return child;
   };
 
   this.applyHistoryState = function(stateData){
@@ -326,7 +351,7 @@ var Excelify = function(startupOptions){
         this.historyStates.splice(this.stateIndex+1);
       }
       data = JSON.stringify(data);
-      if( this.historyStates[this.stateIndex] != data ){// if data changed, store it!
+      if( this.historyStates[this.stateIndex] != data ){ // if data changed, store it!
         this.historyStates.push(data);
         if( this.historyStates.length > this.maxStates ){
           this.historyStates.splice(0, this.historyStates.length - this.maxStates); // cull old states

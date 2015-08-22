@@ -27,12 +27,12 @@ body{font-family:sans-serif;}
 			rowElm = Cr.elm('div',{class:"headingrow row excelrow"},[],conainerElm);
 
 			Cr.elm('div',{class:"cell cellheading",  event:['click', selectAll]},[
-				Cr.txt("Select All")
+				Cr.elm('div',{},[Cr.txt("Select All")])
 			],rowElm);
 
 			for( c=0; c<cols; c++ ){
 				Cr.elm('div',{class:"cell cellheading excelheading", 'data-col':c, event:['click', selectColumn], 'data-col-search':headingText.substr(c,3)},[
-					Cr.txt(headingText.substr(c,3) + ' ('+c+')')
+					Cr.elm('div',{},[Cr.txt(headingText.substr(c,3) + ' ('+c+')')])
 				],rowElm);
 			}
 
@@ -40,7 +40,7 @@ body{font-family:sans-serif;}
 				rowElm = Cr.elm('div',{class:"excelrow row", 'data-row-search':headingText.substr(r,3)},[],conainerElm);
 
 				Cr.elm('div',{class:"cell cellheading excelheading", 'data-row':r, event:['click', selectRow]},[
-					Cr.txt(headingText.substr(r,3) + ' ('+r+')')
+					Cr.elm('div',{},[Cr.txt(headingText.substr(r,3) + ' ('+r+')')])
 				],rowElm);
 
 				for( c=0; c<cols; c++ ){
