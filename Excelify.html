@@ -114,7 +114,7 @@ body{font-family:sans-serif;}
 			excelController = new Excelify({
 				containerElm: conatinerElm, 		// scope event listening and processing to a specific context, you can think <table>
 				// selectors must be valid in querySelectorAll, just add a unique class to cells and rows to identify them
-				cellSelector: '.excelcell', 		// must be unique to cells that contain input.cellInputClassName (i.e not headings), (think 'td.excelcell')
+				cellSelector: '.excelcell', 		// must be unique to cells that contain > input.cellInputClassName (i.e not headings), (think 'td.excelcell')
 				rowSelector: '.excelrow',   		// must be unique to rows that contain the cells input.cellInputClassName (think 'tr.excelrow', currently mandatory see rebuildIndex)
 				cellInputClassName: 'cellinput', 	// input elements that have the class will be the source of keyboard and click events
 				headingClassName: 'excelheading',   // supports col and row headings, heading must be within a .rowSelector - except for top row onlly one allowed per row

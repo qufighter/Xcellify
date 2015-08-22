@@ -22,6 +22,7 @@ var Excelify = function(startupOptions){
 
   this.resetState = function(){
     this.tableCellContainers = [];
+    this.fullGrid = [];
     this.tableCells = [];
     this.activeCell = null;
     this.totalDimensions = {x: 0, y: 0};
@@ -37,17 +38,16 @@ var Excelify = function(startupOptions){
 
   this.resetState();
 
-  var c,cl, r,rl, cell, evcell, x,y,xl,yl; // private counter vars
+  var c,cl, r,rl, cell, cells, evcell, x,y,xl,yl; // private counter vars
 
   this.init = function(startupOptions){
     this.autoProps(startupOptions);
+    this.setupButtonBar();
     this.rebuildIndex();
     this.attachListeners();
     this.validate();
     this.historyUtils.applyStateFn = this.applyHistoryState.bind(this);
     this.clipboardUtils.copyAreaSelector = this.copyAreaSelector;
-    this.setupButtonBar();
-    this.storeStateInHistory();
   };
 
   this.autoProps = function(){
@@ -75,6 +75,50 @@ var Excelify = function(startupOptions){
     }
   };
 
+  this.getGrid = function(){
+    this.fullGrid = [];
+    var rows = this.containerElm.querySelectorAll(this.rowSelector);
+    for( r=0, y=0, rl=rows.length; r<rl; r++ ){
+      this.fullGrid[y] = [];
+      cells = rows[r].querySelectorAll(this.cellSelector);
+      for( c=0, x=0, cl=cells.length; c<cl; c++ ){
+        cell = cells[c].querySelector(this.cellInputQuerySelector);
+        if( cell ){
+          this.fullGrid[y][x] = cell;
+          x++;
+        }
+      }
+      if( this.fullGrid[y].length ){
+        y++;
+      }
+    }
+    this.storeStateInHistory();
+  };
+
+  this.setupHeadings = function(){
+    var rows = this.containerElm.querySelectorAll(this.rowSelector), rheading, cheadings;
+    if( this.headingQuerySelector && rows[0] ){
+      cheadings = rows[0].querySelectorAll(this.headingQuerySelector);
+      for( c=0, x=0, cl=cheadings.length; c<cl; c++ ){
+        if( this.skipInvisibleCells && !this.elementIsVisible(cheadings[c]) ) continue;
+        cheadings[c].setAttribute('data-xcelify-col', x++); // setting attributes is probably teh slowest opperation
+        cheadings[c].setAttribute('data-xcelify-row', '*');
+      }
+    }
+    for( r=0, y=0, rl=rows.length; r<rl; r++ ){
+      if( this.skipInvisibleCells && !this.elementIsVisible(rows[r]) ) continue;
+      cells = rows[r].querySelectorAll(this.cellSelector);
+      if( cells.length ){
+        if( this.headingQuerySelector ){
+          rheading = rows[r].querySelector(this.headingQuerySelector);
+          rheading.setAttribute('data-xcelify-col', '*');
+          rheading.setAttribute('data-xcelify-row', y);
+        }
+        y++;
+      }
+    }
+  };
+
   // call this function whenever the table dom has been modified in a way that there is now a new spreadsheet or new visibility of cells/rows, update all cell references.
   this.rebuildIndex = function(){
     //before rebuilding index we can try to clear previous selection, but only if there was a previous index
@@ -83,40 +127,23 @@ var Excelify = function(startupOptions){
       this.hideCopySelection();
     }
     this.resetState();
+    this.getGrid(); // if grid size changed we may need to zap history states we have since they might apply no longer
+    this.setupHeadings();
     // without rows we can still build the index from cells using an offset position helper function
-    var rows = this.containerElm.querySelectorAll(this.rowSelector), cells, cellContainer, colHeadings=[], rowHeadings=[], rheading, cheadings;
-    if( this.headingQuerySelector && rows[0] ){
-      cheadings = rows[0].querySelectorAll(this.headingQuerySelector);
-      for( c=0, x=0, cl=cheadings.length; c<cl; c++ ){
-        if( this.skipInvisibleCells && !this.elementIsVisible(cheadings[c]) ) continue;
-        cheadings[c].setAttribute('data-excelify-col', x++);
-        cheadings[c].setAttribute('data-excelify-row', '*');
-        colHeadings.push(cheadings[c]);
-      }
-    }
 
-    for( r=0, y=0, rl=rows.length; r<rl; r++ ){
+    for( r=0, y=0, rl=this.fullGrid.length; r<rl; r++ ){
       this.tableCellContainers[y] = [], this.tableCells[y] = [];
-      if( this.skipInvisibleCells && !this.elementIsVisible(rows[r]) ) continue;
-      cells = rows[r].querySelectorAll(this.cellSelector);
+      if( this.skipInvisibleCells && (!this.fullGrid[r].length || !this.elementIsVisible(this.fullGrid[r][0])) ) continue;
+      cells = this.fullGrid[r];
       for( c=0, x=0, cl=cells.length; c<cl; c++ ){
-        cellContainer = cells[c];
-        if( this.skipInvisibleCells && !this.elementIsVisible(cellContainer) ) continue;
-        this.tableCellContainers[y][x] = cellContainer; // store cell container
-        cell = cells[c].querySelector(this.cellInputQuerySelector);
-        if( cell ){
-          this.tableCells[y][x] = cell;
-          cell.setAttribute('data-excelify-col', x++);
-          cell.setAttribute('data-excelify-row', y);
-        }
+        cell = cells[c];
+        if( this.skipInvisibleCells && !this.elementIsVisible(cell) ) continue;
+        this.tableCellContainers[y][x] = cell.parentNode; // store cell container < verify cell container ?? 
+        this.tableCells[y][x] = cell;
+        cell.setAttribute('data-xcelify-col', x++);
+        cell.setAttribute('data-xcelify-row', y);
       }
       if( this.tableCellContainers[y].length ){
-        if( this.headingQuerySelector ){
-          rheading = rows[r].querySelector(this.headingQuerySelector);
-          rheading.setAttribute('data-excelify-col', '*');
-          rheading.setAttribute('data-excelify-row', y);
-          if( rheading ) rowHeadings.push(rheading);
-        }
         y++;
       }
     }
@@ -227,8 +254,8 @@ var Excelify = function(startupOptions){
 
   this.cellPosition = function(cell){
     return {
-      x: cell.getAttribute('data-excelify-col') - 0,
-      y: cell.getAttribute('data-excelify-row') - 0
+      x: cell.getAttribute('data-xcelify-col') - 0,
+      y: cell.getAttribute('data-xcelify-row') - 0
     };
   };
 
@@ -330,13 +357,13 @@ var Excelify = function(startupOptions){
 
   this.applyHistoryState = function(stateData){
     this.applyingHistoryState = true;
-    this.setMultiValueMultiCell({x:0, y:0}, stateData);
+    this.setMultiValueMultiCell(this.fullGrid, {x:0, y:0}, stateData);
     this.applyingHistoryState = false;
   };
 
   this.storeStateInHistory = function(){
     if( !this.applyingHistoryState ){
-      this.historyUtils.addState(this.getAllCellValues());
+      this.historyUtils.addState(this.getAllCellValues(this.fullGrid));
     }
   };
 
@@ -533,7 +560,7 @@ var Excelify = function(startupOptions){
       this.styleActiveSelection();
       this.styleEdges(this.copySelectionStart, this.copySelectionEnd, ''); // hide copy region after paste
     }
-    this.setMultiValueMultiCell(this.selectionStart, pasted);
+    this.setMultiValueMultiCell(this.tableCells, this.selectionStart, pasted);
 
     setTimeout(this.activatePreviousCell.bind(this), 250);
   };
@@ -542,21 +569,21 @@ var Excelify = function(startupOptions){
     return confirm('Selection size ('+selSize.x+','+selSize.y+') mismatches clipboard size ('+clipSize.x+','+clipSize.y+'), continue paste?');
   };
 
-  this.getAllCellValues = function(){
+  this.getAllCellValues = function(gridToRead){
     var allValues = [];
-    for( y=0,yl=this.tableCells.length; y<yl; y++ ){
+    for( y=0,yl=gridToRead.length; y<yl; y++ ){
       allValues[y] = [];
-      for( x=0,xl=this.tableCells[y].length; x<xl; x++ ){
-        allValues[y][x] = this.tableCells[y][x].value;
+      for( x=0,xl=gridToRead[y].length; x<xl; x++ ){
+        allValues[y][x] = gridToRead[y][x].value;
       }
     }
     return allValues;
   };
 
-  this.setMultiValueMultiCell = function(start, values){
+  this.setMultiValueMultiCell = function(gridToSet, start, values){
     for( y=0,yl=values.length; y<yl; y++ ){
       for( x=0,xl=values[y].length; x<xl; x++ ){
-        cell = this.tableCells[y+start.y];
+        cell = gridToSet[y+start.y];
         if( cell ){
           cell = cell[x+start.x];
           if( cell ) cell.value = values[y][x];
