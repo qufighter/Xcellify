@@ -186,9 +186,11 @@ var Excelify = function(startupOptions){
           return;
         case 90: // Z key - Undo / Redo
           if( ev.shiftKey ){
-            this.historyUtils.redo(); // Cmd-Shift-Z redo
+            this.clipboardUtils.hideArea();
+            this.historyUtils.redo(ev); // Cmd-Shift-Z redo
           }else{
-            this.historyUtils.undo(); // Cmd-Z undo
+            this.clipboardUtils.hideArea();
+            this.historyUtils.undo(ev); // Cmd-Z undo
           }
           return;
       }
@@ -272,6 +274,14 @@ var Excelify = function(startupOptions){
     }
     this.isDragging = true;
     this.activeCell = evcell;
+
+    if( evcell.parentNode == ev.target ){ // clicked on the parent node of input
+      setTimeout(function(){
+        evcell.select();
+        this.singleCellEditingMode = false;
+      }, 10);
+    }
+
     this.dragOrigin = this.cellPosition(evcell);
     if( this.pointsEqual(this.activeCellIndex, this.dragOrigin) ){
       this.singleCellEditingMode = true;
@@ -334,11 +344,14 @@ var Excelify = function(startupOptions){
   this.findAppropriateEventTarget = function(ev){
     var evcell = ev.target, evinput = ev.target;
     if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
-      evinput = evcell.querySelector(this.cellInputQuerySelector) || evcell.parentNode.querySelector(this.cellInputQuerySelector);
+      evinput = evcell.querySelector(this.cellInputQuerySelector);
+      if( !evinput && evcell.parentNode.matches(this.cellSelector) ){ // use of .matches here might need some compatibility // https://developer.mozilla.org/en-US/docs/Web/API/Element/matches
+        evinput = evcell.parentNode.querySelector(this.cellInputQuerySelector);
+      }
       if( !evinput ){
         if( !(evcell = this.descendentOfClass(evcell, this.headingClassName)) ){
             this.hideCurrentSelection();
-            return;
+            return null;
         }
       }else{
         evcell = evinput;
@@ -389,17 +402,22 @@ var Excelify = function(startupOptions){
         this.buttonBarUpdate();
       }
     },
-    undo: function(){
+    undo: function(ev){
       this.stateIndex--;
       if( this.stateIndex < 0 ) this.stateIndex = 0;
       this.applyStateFn(JSON.parse(this.historyStates[this.stateIndex]));
       this.buttonBarUpdate();
+      ev.preventDefault();
     },
-    redo: function(){
+    redo: function(ev){
       this.stateIndex++;
       if( this.stateIndex >=this.historyStates.length -1 ) this.stateIndex = this.historyStates.length -1;
       this.applyStateFn(JSON.parse(this.historyStates[this.stateIndex]));
       this.buttonBarUpdate();
+      ev.preventDefault();
+    },
+    clear: function(){
+      this.historyStates = []; this.stateIndex = -1; this.buttonBarUpdate();
     },
     buttonBarUpdate: function(){
       if( this.buttonBarElements ){
@@ -521,10 +539,10 @@ var Excelify = function(startupOptions){
 
   this.assembleIndexedPaste = function(activeCell, v){ // designed to be over-ridden
     var val = activeCell.value;
+    var selPos = activeCell.selectionStart + v.length;
     var newValue = val.slice(0, activeCell.selectionStart) + v + val.slice(activeCell.selectionStart, val.length);
-    // here is where we might need to set the caret or cursor position back to what it was previously.
-    // it should go to the previous position plus v.length
     activeCell.value = newValue;
+    activeCell.setSelectionRange(selPos, selPos); // reset cursor position
   };
 
   this.valuesPasted = function(v){
@@ -549,9 +567,8 @@ var Excelify = function(startupOptions){
 
     var selSize = this.selectionSize();
     if( selSize.total > 1 && (rowCount != selSize.y || cl != selSize.x) ){
-      if( !this.selectionConfirmation(selSize, {x: cl, y: rowCount}) ){
-        setTimeout(this.activatePreviousCell.bind(this), 250);
-        return;
+      if( this.selectionConfirmation(selSize, {x: cl, y: rowCount}) ){
+        pasted = this.replicatePaste(pasted, selSize);
       }
     }
     if( pasted[0] ){
@@ -561,12 +578,22 @@ var Excelify = function(startupOptions){
       this.styleEdges(this.copySelectionStart, this.copySelectionEnd, ''); // hide copy region after paste
     }
     this.setMultiValueMultiCell(this.tableCells, this.selectionStart, pasted);
-
     setTimeout(this.activatePreviousCell.bind(this), 250);
   };
 
+  this.replicatePaste = function(pasted, selSize){
+    var pastedRows = pasted.length, pastedCols = pasted[0].length;
+    for( r=0, rl=selSize.y; r<rl; r++ ){
+      pasted[r] = pasted[r%pastedRows];
+      for( c=0, cl=selSize.x; c<cl; c++ ){
+        pasted[r][c] = pasted[r][c%pastedCols];
+      }
+    }
+    return pasted;
+  };
+
   this.selectionConfirmation = function(selSize, clipSize){ // override
-    return confirm('Selection size ('+selSize.x+','+selSize.y+') mismatches clipboard size ('+clipSize.x+','+clipSize.y+'), continue paste?');
+    return confirm('Selection size ('+selSize.x+', '+selSize.y+') mismatches clipboard size ('+clipSize.x+', '+clipSize.y+')\n\nPaste will continue, replicate across selection?');
   };
 
   this.getAllCellValues = function(gridToRead){
