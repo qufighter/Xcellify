@@ -1,13 +1,13 @@
 /*jshint expr:true*/
 /*
  * Xcelify by Sam Larison
- * transform selection of input elements into Excel-like spreadsheet with undo functionality - Excelify!
+ * transform selection of input elements into Excel-like spreadsheet with undo functionality - Excellify!
  * features: spreadsheet copy, cut, paste, multi-select, undo, redo, clear multiple, enter key move to next cell in selection
 */
-var Excelify = function(startupOptions){
+var Xcellify = function(startupOptions){
   this.containerElm = null; //reqd
-  this.rowSelector = '.row';
-  this.cellSelector = '.excelcell'; // should only select cells with input fields inside, not headings
+  this.rowSelector = '.xcellrow';
+  this.cellSelector = '.xcellcell'; // should only select cells with input fields inside, not headings
   this.cellInputClassName = 'cellinput'; // should be unique such that cellSelector does not contain this
   this.cellInputQuerySelector = 'AUTO'; // "AUTO" to enable auto compute from '.'+cellInputClassName
   this.selectionBorderStyle = '2px solid #1567F0';
@@ -65,13 +65,13 @@ var Excelify = function(startupOptions){
 
   this.validate = function(){
     if( this.cellInputClassName.indexOf('.') > -1 ){
-      console.error('Excelify:Validation:Failure : cellInputClassName '+this.cellInputClassName+' looks like a selector, should be a unique class name');
+      console.error('Xcellify:Validation:Failure : cellInputClassName '+this.cellInputClassName+' looks like a selector, should be a unique class name');
     }
     if( this.headingClassName.indexOf('.') > -1 ){
-      console.error('Excelify:Validation:Failure : headingClassName '+this.headingClassName+' looks like a selector, should be a unique class name');
+      console.error('Xcellify:Validation:Failure : headingClassName '+this.headingClassName+' looks like a selector, should be a unique class name');
     }
     if( this.cellSelector.indexOf(this.cellInputClassName) > -1 ){
-      console.error('Excelify:Validation:Failure : cellInputClassName '+this.cellInputClassName+' must not be found in cellSelector '+this.cellSelector);
+      console.error('Xcellify:Validation:Failure : cellInputClassName '+this.cellInputClassName+' must not be found in cellSelector '+this.cellSelector);
     }
   };
 
@@ -759,5 +759,5 @@ var Excelify = function(startupOptions){
     return this.subtractPoints(this.selectionEnd, this.selectionStart);
   };
 
-  this.init(startupOptions); // new Excelify(startupOptions);
+  this.init(startupOptions); // new Xcellify(startupOptions);
 };
