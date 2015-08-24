@@ -55,6 +55,10 @@ body{font-family:sans-serif;}
 							Cr.elm('span',{style:'position:absolute;top:2px;right:3px;background-color:light-grey;',event:['click',gotClicked]},[Cr.txt('Edit')])
 						);
 					}
+					// why not contain the cell elements in some arbatrary divs for fun! really should be avoided but it should work fine!
+					cellElements = [Cr.elm('div',{class:'nest1'},[Cr.elm('div',{class:'nest2'},cellElements)])];
+					// if broken its not too obvious but cells shift and border appears inside the cell instead of on the cell wall
+
 					Cr.elm('div',{class:"cell xcellcell", style:style, 'data-col-search':headingText.substr(c,3)},cellElements,rowElm);
 				}
 			}

@@ -138,7 +138,7 @@ var Xcellify = function(startupOptions){
       for( c=0, x=0, cl=cells.length; c<cl; c++ ){
         cell = cells[c];
         if( this.skipInvisibleCells && !this.elementIsVisible(cell) ) continue;
-        this.tableCellContainers[y][x] = cell.parentNode; // store cell container < verify cell container ?? 
+        this.tableCellContainers[y][x] = this.findMatchingParent(cell, this.cellSelector) || cell;
         this.tableCells[y][x] = cell;
         cell.setAttribute('data-xcelify-col', x++);
         cell.setAttribute('data-xcelify-row', y);
@@ -275,7 +275,7 @@ var Xcellify = function(startupOptions){
     this.isDragging = true;
     this.activeCell = evcell;
 
-    if( evcell.parentNode == ev.target ){ // clicked on the parent node of input
+    if( this.hasClass(evcell, this.cellInputClassName) && evcell != ev.target ){ // clicked on the cell (borders), found the input, stop selecting
       setTimeout(function(){
         evcell.select();
         this.singleCellEditingMode = false;
@@ -294,7 +294,7 @@ var Xcellify = function(startupOptions){
   this.mouseUpContainer = function(ev){
     this.isDragging = false;
     var evcell = ev.target;
-    if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
+    if( !this.hasClass(evcell, this.cellInputClassName) ){
       return;
     }
     this.storeStateInHistory(); // in case we just made a change
@@ -325,8 +325,8 @@ var Xcellify = function(startupOptions){
   this.mouseMovedProcessor = function(evcell){
     if( !evcell ) return;
     var currentPosition;
-    if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
-      if( evcell.className.indexOf(this.headingClassName) ){
+    if( !this.hasClass(evcell, this.cellInputClassName) ){
+      if( this.hasClass(evcell, this.headingClassName) ){
         currentPosition = this.cellPosition(evcell);
         this.selectBoxedCells(this.dragOrigin, currentPosition);
       }
@@ -343,10 +343,13 @@ var Xcellify = function(startupOptions){
 
   this.findAppropriateEventTarget = function(ev){
     var evcell = ev.target, evinput = ev.target;
-    if( evcell.className.indexOf(this.cellInputClassName) < 0 ){
+    if( !this.hasClass(evcell, this.cellInputClassName) ){
       evinput = evcell.querySelector(this.cellInputQuerySelector);
-      if( !evinput && evcell.parentNode.matches(this.cellSelector) ){ // use of .matches here might need some compatibility // https://developer.mozilla.org/en-US/docs/Web/API/Element/matches
-        evinput = evcell.parentNode.querySelector(this.cellInputQuerySelector);
+      if( !evinput ){
+        var cellContainer = this.findMatchingParent(evcell, this.cellSelector);
+        if( cellContainer ){
+          evinput = cellContainer.querySelector(this.cellInputQuerySelector);
+        }
       }
       if( !evinput ){
         if( !(evcell = this.descendentOfClass(evcell, this.headingClassName)) ){
@@ -360,12 +363,20 @@ var Xcellify = function(startupOptions){
     return evcell;
   };
 
-  this.descendentOfClass = function(child, search){ // does this function exist already
-    while( child && child.className.indexOf(this.headingClassName) < 0  ){
+  this.findMatchingParent = function(child, selector){
+    while( child && ! child.matches(selector)  ){ // use of .matches here might need some compatibility // https://developer.mozilla.org/en-US/docs/Web/API/Element/matches
       child = child.parentNode;
-      child = child.className ? child : false;
+      child = child.parentNode ? child : false; // document has no parentNode, stop when we reach an element without parent.
     }
     return child;
+  };
+
+  this.descendentOfClass = function(child, className){
+    return this.findMatchingParent(child, '.'+className);
+  };
+
+  this.hasClass = function(elm, className){
+    return elm.className.indexOf(className) > -1;
   };
 
   this.applyHistoryState = function(stateData){
