@@ -10,9 +10,11 @@ body{font-family:sans-serif;}
 .cell{display:inline-block;border:2px solid #999;width:150px;min-height:24px;max-height:24px;height:24px;vertical-align: top;position:relative;}
 .cell input{border:none;padding:5px;width:100%;}
 .cellheading{font-weight:bold;}
+#configKey{margin-bottom:10px;}
 </style>
 	<script src="Cr.js"></script>
 	<script src="Xcellify.js"></script>
+	<script src="HighlightClass.js"></script>
 	<script type="text/javascript">
 
 		var containerId = "xcellTable";
@@ -46,7 +48,7 @@ body{font-family:sans-serif;}
 				for( c=0; c<cols; c++ ){
 					var style='';
 					var cellElements=[
-						Cr.elm('input',{class:'cellinput',type:'text', value: "row"+r+"-col"+c})
+						Cr.elm('input',{class:'xcellinput',type:'text', value: "row"+r+"-col"+c})
 					];
 
 					if( c==3 ){
@@ -120,7 +122,7 @@ body{font-family:sans-serif;}
 				// selectors must be valid in querySelectorAll, just add a unique class to cells and rows to identify them
 				cellSelector: '.xcellcell', 		// must be unique to cells that contain > input.cellInputClassName (i.e not headings), (think 'td.xcellcell')
 				rowSelector: '.xcellrow',   		// must be unique to rows that contain the cells input.cellInputClassName (think 'tr.xcellrow', currently mandatory see rebuildIndex)
-				cellInputClassName: 'cellinput', 	// input elements that have the class will be the source of keyboard and click events
+				cellInputClassName: 'xcellinput', 	// input elements that have the class will be the source of keyboard and click events
 				headingClassName: 'xcellheading',   // supports col and row headings, heading must be within a .rowSelector - except for top row onlly one allowed per row
 				copyAreaSelector: '#copyArea',
 				buttonBar: document.getElementById('xcellButtonBar') // optional button bar already in your HTML, supported buttons: span.undo span.redo
@@ -130,6 +132,22 @@ body{font-family:sans-serif;}
 			document.getElementById('rowSearch').addEventListener('change', searchRows);
 			document.getElementById('colSearch').addEventListener('keyup', searchColumns);
 			document.getElementById('rowSearch').addEventListener('keyup', searchRows);
+			document.getElementById('showOffConfig').addEventListener('click', showOffConfig);
+		}
+
+
+		function showOffConfig(ev){
+			if( confirm("This will allow you to witness the configuration (what classes go where) to help you configure your own.  It is not pretty and cannot be undone.  When you have analyzed the setup refresh the page to resume normal usage.  The one key point is that the select All field is not one of the headings") ){
+				var key = {
+					'xcellcell': {border: '3px solid blue'},
+					'xcellinput': {border: '3px solid orange', backgroundColor: 'yellow'},
+					'xcellrow': {border: '2px solid red'},
+					'xcellheading': {border: '3px solid green'},
+				};
+
+				highlightClasses.applyCss(key);
+				highlightClasses.showKey(document.getElementById('configKey'), key);
+			}
 		}
 		
 	</script>
@@ -138,6 +156,8 @@ body{font-family:sans-serif;}
 	<h3>Xcellify</h3>
 	<div id="xcellButtonBar"><span class="pointer undo">&larr; undo </span><span class="pointer redo"> redo &rarr;</span>
 	Column Search <input type="search" id="colSearch"/> Row Search <input type="search" id="rowSearch"/></div>
+	<input type="button" id="showOffConfig" value="show configuraton" />
+	<div id="configKey"></div>
 	<div id="xcellTable"></div>
 
 	<div id="copyArea" style="display:none;position:fixed;top:25%;left:25%;right:25%;width:50%;opacity:1.0;background-color:white;padding:15px;border:1px solid black;box-shadow:3px 3px 3px black;">
