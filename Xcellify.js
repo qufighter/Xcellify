@@ -604,7 +604,7 @@ var Xcellify = function(startupOptions){
   };
 
   this.selectionConfirmation = function(selSize, clipSize){ // override
-    return confirm('Selection size ('+selSize.x+', '+selSize.y+') mismatches clipboard size ('+clipSize.x+', '+clipSize.y+')\n\nPaste will continue, replicate across selection?');
+    return confirm('Selection size ('+selSize.x+', '+selSize.y+') mismatches clipboard size ('+clipSize.x+', '+clipSize.y+')\n\nPaste will continue, replicate clipboard contents across selection?');
   };
 
   this.getAllCellValues = function(gridToRead){
