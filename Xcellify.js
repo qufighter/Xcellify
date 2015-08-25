@@ -38,7 +38,7 @@ var Xcellify = function(startupOptions){
 
   this.resetState();
 
-  var c,cl, r,rl, cell, cells, evcell, x,y,xl,yl; // private counter vars
+  var c,cl, r,rl, row, cell, cells, evcell, x,y,xl,yl; // private counter vars
 
   this.init = function(startupOptions){
     this.autoProps(startupOptions);
@@ -133,7 +133,8 @@ var Xcellify = function(startupOptions){
 
     for( r=0, y=0, rl=this.fullGrid.length; r<rl; r++ ){
       this.tableCellContainers[y] = [], this.tableCells[y] = [];
-      if( this.skipInvisibleCells && (!this.fullGrid[r].length || !this.elementIsVisible(this.fullGrid[r][0])) ) continue;
+      row = this.fullGrid[r].length ? (this.findMatchingParent(this.fullGrid[r][0], this.rowSelector)) : null;
+      if( this.skipInvisibleCells && (!row || !this.elementIsVisible(row)) ) continue;
       cells = this.fullGrid[r];
       for( c=0, x=0, cl=cells.length; c<cl; c++ ){
         cell = cells[c];
@@ -399,12 +400,11 @@ var Xcellify = function(startupOptions){
     buttonBarElements: null,
     applyStateFn: function(){},
     addState: function(data){
-      var index = this.historyStates.length;
-      if( this.stateIndex < index-1 ){
-        this.historyStates.splice(this.stateIndex+1);
-      }
       data = JSON.stringify(data);
       if( this.historyStates[this.stateIndex] != data ){ // if data changed, store it!
+        if( this.stateIndex < this.historyStates.length-1 ){
+          this.historyStates.splice(this.stateIndex+1); // adding new undo state, clear redo states
+        }
         this.historyStates.push(data);
         if( this.historyStates.length > this.maxStates ){
           this.historyStates.splice(0, this.historyStates.length - this.maxStates); // cull old states
@@ -447,7 +447,6 @@ var Xcellify = function(startupOptions){
     }
   };
 
-  //could configure this to use some excel like editing area(top of screen) instead of creating new text-area that flashes over
   this.clipboardUtils = {
     previouslyFocusedElement: null,
     textareaStyle: 'position:fixed;top:25%;left:25%;right:25%;width:50%;opacity:0.5',
