@@ -248,6 +248,7 @@ var Xcellify = function(startupOptions){
       }
     }
     if( !this.isDragging ) this.storeStateInHistory(); // in case we made a change and pressed return
+    this.activeCell.scrollIntoViewIfNeeded();
   };
 
   this.elementIsVisible = function(cell){
