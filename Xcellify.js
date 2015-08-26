@@ -183,6 +183,9 @@ var Xcellify = function(startupOptions){
           this.captureCellCopy(ev);
           this.setValueMultiCell(this.selectionStart, this.selectionEnd, ''); 
           return;
+        case 65: // A key - Select All
+          this.triggerSelectAll();
+          return;
         case 90: // Z key - Undo / Redo
           if( ev.shiftKey ){
             this.clipboardUtils.hideArea();
@@ -218,6 +221,15 @@ var Xcellify = function(startupOptions){
   this.keyboardUpEvents = function(ev){
     if( this.clipboardUtils.hideArea() ){
       setTimeout(this.activatePreviousCell.bind(this), 10);
+    }
+  };
+
+  this.triggerSelectAll = function(){
+    var selSize = this.selectionSize();
+    if( selSize.total == 1 ){
+      this.activeCell.select();
+      this.singleCellEditingMode = false;
+      this.clipboardUtils.hideArea();
     }
   };
 
@@ -549,7 +561,7 @@ var Xcellify = function(startupOptions){
   this.assembleIndexedPaste = function(activeCell, v){ // designed to be over-ridden
     var val = activeCell.value;
     var selPos = activeCell.selectionStart + v.length;
-    var newValue = val.slice(0, activeCell.selectionStart) + v + val.slice(activeCell.selectionStart, val.length);
+    var newValue = val.slice(0, activeCell.selectionStart) + v + val.slice(activeCell.selectionEnd, val.length);
     activeCell.value = newValue;
     activeCell.setSelectionRange(selPos, selPos); // reset cursor position
   };
