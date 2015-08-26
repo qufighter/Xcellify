@@ -13,7 +13,7 @@ var Xcellify = function(startupOptions){
   this.selectionBorderStyle = '2px solid #1567F0';
   this.copiedSelectionBorderStyle = '2px dashed #1567F0';
   this.selectionBackgroundStyle = '#C5E0FF';
-  this.copyAreaSelector = null; //to have div on page defined that contains <textarea> for copy and paste intercept
+  this.copyAreaSelector = null; //to have div on page defined that contains <textarea> for copy and paste
   this.headingClassName = '';
   this.headingQuerySelector = 'AUTO';
   this.buttonBar = null;
@@ -76,7 +76,7 @@ var Xcellify = function(startupOptions){
   };
 
   this.getGrid = function(){
-    this.fullGrid = [];
+    this.fullGrid = []; // without rows we can still build the index from cells using an offset position helper function
     var rows = this.containerElm.querySelectorAll(this.rowSelector);
     for( r=0, y=0, rl=rows.length; r<rl; r++ ){
       this.fullGrid[y] = [];
@@ -129,7 +129,6 @@ var Xcellify = function(startupOptions){
     this.resetState();
     this.getGrid(); // if grid size changed we may need to zap history states we have since they might apply no longer
     this.setupHeadings();
-    // without rows we can still build the index from cells using an offset position helper function
 
     for( r=0, y=0, rl=this.fullGrid.length; r<rl; r++ ){
       this.tableCellContainers[y] = [], this.tableCells[y] = [];
@@ -166,7 +165,6 @@ var Xcellify = function(startupOptions){
     this.containerElm.addEventListener('mousedown', this.mouseDownContainer.bind(this));
     this.containerElm.addEventListener('mouseup', this.mouseUpContainer.bind(this));
     this.containerElm.addEventListener('mouseover', this.mouseMoveContainer.bind(this));
-    // key events only fire when a text cell is currently active
     document.addEventListener('keydown', this.keyboardDnEvents.bind(this));
     document.addEventListener('keyup', this.keyboardUpEvents.bind(this));
   };
