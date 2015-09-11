@@ -187,12 +187,13 @@ var Xcellify = function(startupOptions){
           this.triggerSelectAll();
           return;
         case 90: // Z key - Undo / Redo
-          if( ev.shiftKey ){
+          if( ev.shiftKey ){ // Cmd-Shift-Z redo
             this.clipboardUtils.hideArea();
-            this.historyUtils.redo(ev); // Cmd-Shift-Z redo
-          }else{
+            this.historyUtils.redo(ev);
+          }else{ // Cmd-Z undo
             this.clipboardUtils.hideArea();
-            this.historyUtils.undo(ev); // Cmd-Z undo
+            this.storeStateInHistory(); // we can always try to add the current state before we undo since duplicate state that equals current is not stored, cannot before redo since we loose future state by adding a new one
+            this.historyUtils.undo(ev);
           }
           return;
       }
