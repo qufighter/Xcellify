@@ -350,7 +350,7 @@ var Xcellify = function(startupOptions){
         this.singleCellEditingMode=false; // so much for single cell editing mode, the active cell has changed
       }else{
         if( this.pointsEqual(currentPosition, this.activeCellIndex) ){
-          var cursorSelSize = this.activeSelectionSize(); // none of this works - except now it does
+          var cursorSelSize = this.activeSelectionSize();
           if( cursorSelSize > 0 ){
             singleCellEditingMode=true; // allow return to single editing mode on accidental multi box select
           }
