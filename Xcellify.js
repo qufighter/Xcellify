@@ -47,6 +47,7 @@ var Xcellify = function(startupOptions){
     this.attachListeners();
     this.validate();
     this.historyUtils.applyStateFn = this.applyHistoryState.bind(this);
+    this.historyUtils.storeStateFn = this.storeStateInHistory.bind(this);
     this.clipboardUtils.copyAreaSelector = this.copyAreaSelector;
   };
 
@@ -192,7 +193,6 @@ var Xcellify = function(startupOptions){
             this.historyUtils.redo(ev);
           }else{ // Cmd-Z undo
             this.clipboardUtils.hideArea();
-            this.storeStateInHistory(); // we can always try to add the current state before we undo since duplicate state that equals current is not stored, cannot before redo since we loose future state by adding a new one
             this.historyUtils.undo(ev);
           }
           return;
@@ -416,6 +416,7 @@ var Xcellify = function(startupOptions){
     maxStates: 50,
     stateIndex: -1,
     buttonBarElements: null,
+    storeStateFn: null,
     applyStateFn: function(){},
     addState: function(data){
       data = JSON.stringify(data);
@@ -432,6 +433,7 @@ var Xcellify = function(startupOptions){
       }
     },
     undo: function(ev){
+      if( this.storeStateFn ) this.storeStateFn(); // we can always try to add the current state before we undo since duplicate state that equals current is not stored, cannot before redo since we loose future state by adding a new one
       this.stateIndex--;
       if( this.stateIndex < 0 ) this.stateIndex = 0;
       this.applyStateFn(JSON.parse(this.historyStates[this.stateIndex]));
