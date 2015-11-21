@@ -19,6 +19,7 @@ var Xcellify = function(startupOptions){
   this.buttonBar = null;
   this.skipInvisibleCells = true;
   this.singleCellEditingMode = false;
+  this.hasFocus = 0;
 
   this.resetState = function(){
     this.tableCellContainers = [];
@@ -168,10 +169,20 @@ var Xcellify = function(startupOptions){
     this.containerElm.addEventListener('mouseover', this.mouseMoveContainer.bind(this));
     document.addEventListener('keydown', this.keyboardDnEvents.bind(this));
     document.addEventListener('keyup', this.keyboardUpEvents.bind(this));
+    document.addEventListener('focus', this.determineIfFocused.bind(this), true);
+  };
+
+  this.determineIfFocused = function(ev){
+    if( this.findMatchingParent(ev.target, this.rowSelector) ||
+        this.findMatchingParent(ev.target, this.copyAreaSelector) ){
+      this.hasFocus = 1;
+    }else{
+      this.hasFocus = 0;
+    }
   };
 
   this.keyboardDnEvents = function(ev){
-    if( !this.elementIsVisible(this.containerElm) || this.totalDimensions.x < 0 || this.totalDimensions.y < 0 ) return;
+    if( !this.hasFocus || !this.elementIsVisible(this.containerElm) || this.totalDimensions.x < 0 || this.totalDimensions.y < 0 ) return;
     if( ev.metaKey ){ // command/control
       switch(ev.keyCode){
         case 67: // C key - Copy
@@ -220,7 +231,7 @@ var Xcellify = function(startupOptions){
   };
 
   this.keyboardUpEvents = function(ev){
-    if( this.clipboardUtils.hideArea() ){
+    if( this.hasFocus && this.clipboardUtils.hideArea() ){
       setTimeout(this.activatePreviousCell.bind(this), 10);
     }
   };
