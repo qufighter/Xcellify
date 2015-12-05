@@ -41,15 +41,21 @@ var Xcellify = function(startupOptions){
 
   var c,cl, r,rl, row, cell, cells, evcell, x,y,xl,yl; // private counter vars
 
-  this.init = function(startupOptions){
+  this.init = function(startupOptions){ // to be called once per page load for a given container element that will remain on the page
     this.autoProps(startupOptions);
     this.setupButtonBar();
     this.rebuildIndex();
-    this.attachListeners();
+    this.attachListeners(); // attaches event listeners to both the document and container element
     this.validate();
     this.historyUtils.applyStateFn = this.applyHistoryState.bind(this);
     this.historyUtils.storeStateFn = this.storeStateInHistory.bind(this);
     this.clipboardUtils.copyAreaSelector = this.copyAreaSelector;
+  };
+
+  this.destroy = function(){ // not needed as long as container element stays the same and remains in the DOM, in which case you may call rebuildIndex if the table changes
+    //this.detachListeners();
+    //this.destroyButtonBar();
+    this.resetState();
   };
 
   this.autoProps = function(){
@@ -163,7 +169,7 @@ var Xcellify = function(startupOptions){
     }
   };
 
-  this.attachListeners = function(){ // only call again if container element changes
+  this.attachListeners = function(){ // do not call more than once
     this.containerElm.addEventListener('mousedown', this.mouseDownContainer.bind(this));
     this.containerElm.addEventListener('mouseup', this.mouseUpContainer.bind(this));
     this.containerElm.addEventListener('mouseover', this.mouseMoveContainer.bind(this));
@@ -286,6 +292,7 @@ var Xcellify = function(startupOptions){
   };
 
   this.mouseDownContainer = function(ev){
+    if( ev.target == this.containerElm || ev.target.matches(this.rowSelector) ) return;
     var evcell = this.findAppropriateEventTarget(ev);
     if( !evcell ){
       this.hideCurrentSelection();
