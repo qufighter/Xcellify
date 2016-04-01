@@ -119,6 +119,7 @@ var Xcellify = function(startupOptions){
       if( cells.length ){
         if( this.headingQuerySelector ){
           rheading = rows[r].querySelector(this.headingQuerySelector);
+          if( !rheading ) continue;
           rheading.setAttribute('data-xcelify-col', '*');
           rheading.setAttribute('data-xcelify-row', y);
         }
@@ -180,7 +181,8 @@ var Xcellify = function(startupOptions){
 
   this.determineIfFocused = function(ev){
     if( this.findMatchingParent(ev.target, this.rowSelector) ||
-        this.findMatchingParent(ev.target, this.copyAreaSelector) ){
+        this.findMatchingParent(ev.target, this.copyAreaSelector) ||
+        (this.clipboardUtils.lastArea && ev.target == this.clipboardUtils.lastArea) ){
       this.hasFocus = 1;
     }else{
       this.hasFocus = 0;
@@ -279,7 +281,7 @@ var Xcellify = function(startupOptions){
     this.activeCell.scrollIntoViewIfNeeded();
   };
 
-  this.elementIsVisible = function(cell){
+  this.elementIsVisible = function(cell){  // WARN: this only detects visibility of block level elements
     return  cell.clientWidth !== 0 && cell.clientHeight !== 0 && //cell.style.opacity !== 0 &&
             cell.style.visibility !== 'hidden';
   };
