@@ -683,7 +683,10 @@ var Xcellify = function(startupOptions){
         cell = gridToSet[y+start.y];
         if( cell ){
           cell = cell[x+start.x];
-          if( cell ) cell.value = values[y][x];
+          if( cell ){
+            cell.value = values[y][x];
+            cell.dispatchEvent(new Event('change'));
+          }
         }
       }
     }
