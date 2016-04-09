@@ -614,12 +614,12 @@ var Xcellify = function(startupOptions){
 
   this.valuesPasted = function(v){
     var pasted = [];
-    var rows = v.split(this.delimitRows); // it should end with one \n followed by nothing
+    var rows = this.delimitRows ? v.split(this.delimitRows) : [v]; // it should end with one \n followed by nothing
     var rowCount = 0;
     for( r=0, x=1, rl=rows.length; r<rl; r++,x++ ){
       if( rows[r].length < 1 && x == rl ) continue; // this was to capture last row...
       pasted[r] = [];
-      cells = rows[r].split(this.delimitCells);
+      cells = this.delimitCells? rows[r].split(this.delimitCells) : [rows[r]];
       for( c=0, cl=cells.length; c<cl; c++ ){
         pasted[r][c] = cells[c];
       }
