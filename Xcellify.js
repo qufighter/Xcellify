@@ -634,9 +634,10 @@ var Xcellify = function(startupOptions){
 
     var selSize = this.selectionSize();
     if( selSize.total > 1 && (rowCount != selSize.y || cl != selSize.x) ){
-      if( this.selectionConfirmation(selSize, {x: cl, y: rowCount}) ){
-        pasted = this.replicatePaste(pasted, selSize);
-      }
+      var _this = this; // for convenience of over-ridign confirmation function...
+      this.selectionConfirmation(selSize, {x: cl, y: rowCount}, function(){
+        pasted = _this.replicatePaste(pasted, selSize);
+      });
     }
     if( pasted[0] ){
       this.hideCurrentSelection();
@@ -659,8 +660,10 @@ var Xcellify = function(startupOptions){
     return pasted;
   };
 
-  this.selectionConfirmation = function(selSize, clipSize){ // override
-    return confirm('Selection size ('+selSize.x+', '+selSize.y+') mismatches clipboard size ('+clipSize.x+', '+clipSize.y+')\n\nPaste will continue, replicate clipboard contents across selection?');
+  this.selectionConfirmation = function(selSize, clipSize, cbf){ // override
+    if( confirm('Selection size ('+selSize.x+', '+selSize.y+') mismatches clipboard size ('+clipSize.x+', '+clipSize.y+')\n\nPaste will continue, replicate clipboard contents across selection?') ){
+      cbf();
+    }
   };
 
   this.getAllCellValues = function(gridToRead){
