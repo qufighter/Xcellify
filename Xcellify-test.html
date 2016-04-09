@@ -11,6 +11,7 @@ body{font-family:sans-serif;}
 .cell input{border:none;padding:5px;padding-left:15px;width:100%;}
 .cellheading{font-weight:bold;}
 #configKey{margin-bottom:10px;}
+#xcellTable{overflow:auto;height:600;width:863;}
 </style>
 	<script src="Cr.js"></script>
 	<script src="Xcellify.js"></script>
@@ -57,6 +58,18 @@ body{font-family:sans-serif;}
 							Cr.elm('span',{style:'position:absolute;top:2px;right:3px;background-color:light-grey;',event:['click',gotClicked]},[Cr.txt('Edit')])
 						);
 					}
+
+					if( c==2 && r == 15 ){
+						cellElements=[
+							Cr.elm('span',{class:'xcellinput', style:"display:inline-block;"},[
+								Cr.txt('cell missing') // if its not inline block, the elementIsVisible function will fail to detect this, hence it won't be part of the table.
+							])
+						];
+
+						Cr.elm('div',{class:"cell xcellcell ", style:style, 'data-col-search':headingText.substr(c,3)},cellElements,rowElm);
+						continue;
+					}
+
 					// why not contain the cell elements in some arbatrary divs for fun! really should be avoided but it should work fine!
 					cellElements = [Cr.elm('div',{class:'nest1'},[Cr.elm('div',{class:'nest2'},cellElements)])];
 					// if broken its not too obvious but cells shift and border appears inside the cell instead of on the cell wall
@@ -160,7 +173,12 @@ body{font-family:sans-serif;}
 	<input type="button" id="showOffConfig" value="show configuraton" />
 	<div id="configKey"></div>
 	<div id="xcellTable"></div>
-
+	<div style="width:400px;float:right;">
+		1. copy paste
+		2. change search
+		3. paste
+		4. undo redo
+	</div>
 	<div id="copyArea" style="display:none;position:fixed;top:25%;left:25%;right:25%;width:50%;opacity:1.0;background-color:white;padding:15px;border:1px solid black;box-shadow:3px 3px 3px black;">
 		<span style="float:right" class="close">X (ctrl)</span>
 		<div>Copy or paste now C Copy - P Paste - Z Undo - Shift Z Redo</div>
