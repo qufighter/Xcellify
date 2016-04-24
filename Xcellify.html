@@ -6,9 +6,13 @@ body{font-family:sans-serif;}
 .btn{border-radius:5px;border:1px solid #999;  -webkit-user-select: none;}
 .btn:hover{background-color:#AAA;}
 .pointer{cursor:pointer;}
+
+/* you need these classes for the table to render properly */
 .row{white-space: nowrap;}
 .cell{display:inline-block;border:2px solid #999;width:150px;min-height:24px;max-height:24px;height:24px;vertical-align: top;position:relative;}
 .cell input{border:none;padding:5px;padding-left:15px;width:100%;}
+
+
 .cellheading{font-weight:bold;}
 #configKey{margin-bottom:10px;}
 </style>
@@ -33,7 +37,7 @@ body{font-family:sans-serif;}
 			],rowElm);
 
 			for( c=0; c<cols; c++ ){
-				Cr.elm('div',{class:"cell cellheading xcellheading", 'data-col':c, event:['click', selectColumn], 'data-col-search':headingText.substr(c,3)},[
+				Cr.elm('div',{class:"cell cellheading xcellheading", 'data-col':c, 'data-col-search':headingText.substr(c,3)},[
 					Cr.elm('div',{},[Cr.txt(headingText.substr(c,3) + ' ('+c+')')])
 				],rowElm);
 			}
@@ -41,7 +45,7 @@ body{font-family:sans-serif;}
 			for( r=0; r<rows; r++ ){
 				rowElm = Cr.elm('div',{class:"xcellrow row", 'data-row-search':headingText.substr(r,3)},[],conainerElm);
 
-				Cr.elm('div',{class:"cell cellheading xcellheading", 'data-row':r, event:['click', selectRow]},[
+				Cr.elm('div',{class:"cell cellheading xcellheading", 'data-row':r},[
 					Cr.elm('div',{},[Cr.txt(headingText.substr(r,3) + ' ('+r+')')])
 				],rowElm);
 
@@ -68,14 +72,6 @@ body{font-family:sans-serif;}
 
 		function gotClicked(){
 			alert('was clicked!');
-		}
-
-		function selectColumn(ev){
-			//xcellController.selectColumn(ev.target.getAttribute('data-col')-0);
-		}
-
-		function selectRow(ev){
-			//xcellController.selectRow(ev.target.getAttribute('data-row')-0);
 		}
 
 		function selectAll(ev){
