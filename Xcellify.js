@@ -41,6 +41,7 @@ var Xcellify = function(startupOptions){
 
   this.resetState();
 
+  var empty_permanent=Object.freeze({});
   var c,cl, r,rl, row, cell, cells, evcell, x,y,xl,yl; // private counter vars
 
   this.init = function(startupOptions){ // to be called once per page load for a given container element that will remain on the page
@@ -708,29 +709,44 @@ var Xcellify = function(startupOptions){
 
   this.styleCells = function(start, end, backgroundStyle){
     y=start.y, yl=end.y+1;
+    x=start.x,xl=end.x+1;
+
+    var tc, ic;
     if( !this.tableCells[y] ) return;
+    if( !this.tableCells[y][x] ) return;
+    if(  yl > this.tableCells.length ) yl = this.tableCells.length;
     for( ; y<yl; y++ ){
-      for( x=start.x,xl=end.x+1; x<xl; x++ ){
-        this.tableCells[y][x].style.background = backgroundStyle;
+      tc = this.tableCells[y];
+      xl=end.x+1
+      if(  xl > tc.length ) xl = tc.length;
+      for( x=start.x; x<xl; x++ ){
+        ic = tc[x];
+        ic.style.background = backgroundStyle;
       }
     }
   };
 
   this.styleEdges = function(start, end, borderStyle){
     x=start.x, xl=end.x, y=start.y, yl=end.y;
+    var tc, tc2;
     if( !this.tableCellContainers[y] ) return;
     for( ; y<=yl; y++ ){
-      this.drawBorder(this.tableCellContainers[y][x], 'left', borderStyle);
-      this.drawBorder(this.tableCellContainers[y][xl], 'right', borderStyle);
+      tc = this.tableCellContainers[y];
+      if( !tc ) break;
+      this.drawBorder(tc[x], 'left', borderStyle);
+      this.drawBorder(tc[xl], 'right', borderStyle);
     }
-   for( y=start.y; x<=xl; x++ ){
-      this.drawBorder(this.tableCellContainers[y][x], 'top', borderStyle);
-      this.drawBorder(this.tableCellContainers[yl][x], 'bottom', borderStyle);
+    y = start.y;
+    tc = this.tableCellContainers[y] || empty_permanent;
+    tc2 = this.tableCellContainers[yl] || empty_permanent;
+    for( ; x<=xl; x++ ){
+      this.drawBorder(tc[x], 'top', borderStyle);
+      this.drawBorder(tc2[x], 'bottom', borderStyle);
     }
   };
 
   this.drawBorder = function(cell, side, borderStyle){
-    cell.style['border-'+side] = borderStyle;
+    if( cell ) cell.style['border-'+side] = borderStyle;
   };
 
   this.validateStartCoord = function(c){
