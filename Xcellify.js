@@ -144,20 +144,27 @@ var Xcellify = function(startupOptions){
     this.getGrid(); // if grid size changed we may need to zap history states we have since they might apply no longer
     this.setupHeadings();
 
+    var tableCellContainersY = null;
+    var tableCellsY = null;
+
     for( r=0, y=0, rl=this.fullGrid.length; r<rl; r++ ){
-      this.tableCellContainers[y] = [], this.tableCells[y] = [];
+      tableCellContainersY = [], tableCellsY = [];
       row = this.fullGrid[r].length ? (this.findMatchingParent(this.fullGrid[r][0], this.rowSelector)) : null;
       if( this.skipInvisibleCells && (!row || !this.elementIsVisible(row)) ) continue;
       cells = this.fullGrid[r];
       for( c=0, x=0, cl=cells.length; c<cl; c++ ){
         cell = cells[c];
         if( this.skipInvisibleCells && !this.elementIsVisible(cell) ) continue;
-        this.tableCellContainers[y][x] = this.findMatchingParent(cell, this.cellSelector) || cell;
-        this.tableCells[y][x] = cell;
+        //tableCellContainersY[x] = this.findMatchingParent(cell, this.cellSelector) || cell;
+        tableCellContainersY.push(this.findMatchingParent(cell, this.cellSelector) || cell);
+        //tableCellsY[x] = cell;
+        tableCellsY.push(cell);
         cell.setAttribute('data-xcelify-col', x++);
         cell.setAttribute('data-xcelify-row', y);
       }
-      if( this.tableCellContainers[y].length ){
+      if( tableCellContainersY.length ){
+        this.tableCellContainers.push(tableCellContainersY);
+        this.tableCells.push(tableCellsY);
         y++;
       }
     }
@@ -563,15 +570,19 @@ var Xcellify = function(startupOptions){
     }
   };
 
+  this.getTableCellXY = function(x,y){
+    return this.tableCells[y][x];
+  }
+
   this.getCurrentSelectionForCopy = function(){
       var start = this.selectionStart,
           end   = this.selectionEnd,
           clipb = '';
       for( y=start.y, yl=end.y+1; y<yl; y++ ){
         for( x=start.x, xl=end.x; x<xl; x++ ){
-          clipb += this.tableCells[y][x].value+this.delimitCells;
+          clipb += this.getTableCellXY(x,y).value+this.delimitCells;
         }
-        clipb += this.tableCells[y][x].value+this.delimitRows; // last element in row gets \n instead of \t
+        clipb += this.getTableCellXY(x,y).value+this.delimitRows; // last element in row gets \n instead of \t
       }
       return clipb;
   };
@@ -703,7 +714,7 @@ var Xcellify = function(startupOptions){
   this.setValueMultiCell = function(start, end, value){
     for( y=start.y,yl=end.y+1; y<yl; y++ ){
       for( x=start.x,xl=end.x+1; x<xl; x++ ){
-        this.tableCells[y][x].value = value;
+        this.getTableCellXY(x,y).value = value;
       }
     }
     this.storeStateInHistory();
@@ -715,7 +726,7 @@ var Xcellify = function(startupOptions){
     if( !this.tableCells[y] ) return;
     for( ; y<yl; y++ ){
       for( x=start.x,xl=end.x+1; x<xl; x++ ){
-        this.tableCells[y][x].style.background = backgroundStyle;
+        this.getTableCellXY(x,y).style.background = backgroundStyle;
       }
     }
   };
@@ -743,18 +754,22 @@ var Xcellify = function(startupOptions){
     // safe mode performs extra checks when styling cells
     // for really small tables - who cares
     // for really big tables - disable safe mode and keep the index good!
-    this.styleCells = function(start, end, backgroundStyle){
-      y=start.y, yl=end.y+1;
-      x=start.x,xl=end.x+1;
 
+    this.getTableCellXY = function(x,y){
+      var row = this.tableCells[y] || empty_permanent;
+      return row[x] || empty_permanent;
+    }
+
+    this.styleCells = function(start, end, backgroundStyle){
+      // this is completely optional and is still safe without override, should be faster than default function and getTableCellXY
+      y=start.y, yl=end.y+1;
       var tc, ic;
-      if( !this.tableCells[y] ) return;
-      if( !this.tableCells[y][x] ) return;
+      if( !this.tableCells[y]) return;
       if(  yl > this.tableCells.length ) yl = this.tableCells.length;
       for( ; y<yl; y++ ){
         tc = this.tableCells[y];
         xl=end.x+1
-        if(  xl > tc.length ) xl = tc.length;
+        if( xl > tc.length ) xl = tc.length;
         for( x=start.x; x<xl; x++ ){
           ic = tc[x];
           ic.style.background = backgroundStyle;
