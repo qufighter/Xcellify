@@ -17,6 +17,7 @@ var Xcellify = function(startupOptions){
   this.headingClassName = '';
   this.headingQuerySelector = 'AUTO';
   this.buttonBar = null;
+  this.safeMode = false; // errors? try safe mode!
   this.skipInvisibleCells = true;
   this.singleCellEditingMode = false;
   this.delimitCells = "\t";
@@ -46,6 +47,7 @@ var Xcellify = function(startupOptions){
 
   this.init = function(startupOptions){ // to be called once per page load for a given container element that will remain on the page
     this.autoProps(startupOptions);
+    this.setSafeMode();
     this.setupButtonBar();
     this.rebuildIndex();
     this.attachListeners(); // attaches event listeners to both the document and container element
@@ -707,46 +709,83 @@ var Xcellify = function(startupOptions){
     this.storeStateInHistory();
   };
 
+
   this.styleCells = function(start, end, backgroundStyle){
     y=start.y, yl=end.y+1;
-    x=start.x,xl=end.x+1;
-
-    var tc, ic;
     if( !this.tableCells[y] ) return;
-    if( !this.tableCells[y][x] ) return;
-    if(  yl > this.tableCells.length ) yl = this.tableCells.length;
     for( ; y<yl; y++ ){
-      tc = this.tableCells[y];
-      xl=end.x+1
-      if(  xl > tc.length ) xl = tc.length;
-      for( x=start.x; x<xl; x++ ){
-        ic = tc[x];
-        ic.style.background = backgroundStyle;
+      for( x=start.x,xl=end.x+1; x<xl; x++ ){
+        this.tableCells[y][x].style.background = backgroundStyle;
       }
     }
   };
 
   this.styleEdges = function(start, end, borderStyle){
     x=start.x, xl=end.x, y=start.y, yl=end.y;
-    var tc, tc2;
     if( !this.tableCellContainers[y] ) return;
     for( ; y<=yl; y++ ){
-      tc = this.tableCellContainers[y];
-      if( !tc ) break;
-      this.drawBorder(tc[x], 'left', borderStyle);
-      this.drawBorder(tc[xl], 'right', borderStyle);
+      this.drawBorder(this.tableCellContainers[y][x], 'left', borderStyle);
+      this.drawBorder(this.tableCellContainers[y][xl], 'right', borderStyle);
     }
-    y = start.y;
-    tc = this.tableCellContainers[y] || empty_permanent;
-    tc2 = this.tableCellContainers[yl] || empty_permanent;
-    for( ; x<=xl; x++ ){
-      this.drawBorder(tc[x], 'top', borderStyle);
-      this.drawBorder(tc2[x], 'bottom', borderStyle);
+   for( y=start.y; x<=xl; x++ ){
+      this.drawBorder(this.tableCellContainers[y][x], 'top', borderStyle);
+      this.drawBorder(this.tableCellContainers[yl][x], 'bottom', borderStyle);
     }
   };
 
   this.drawBorder = function(cell, side, borderStyle){
-    if( cell ) cell.style['border-'+side] = borderStyle;
+    cell.style['border-'+side] = borderStyle;
+  };
+
+  this.setSafeMode = function(){
+    if( !this.safeMode ) return;
+    // really if rebuildIndex works this should not be needed
+    // safe mode performs extra checks when styling cells
+    // for really small tables - who cares
+    // for really big tables - disable safe mode and keep the index good!
+    this.styleCells = function(start, end, backgroundStyle){
+      y=start.y, yl=end.y+1;
+      x=start.x,xl=end.x+1;
+
+      var tc, ic;
+      if( !this.tableCells[y] ) return;
+      if( !this.tableCells[y][x] ) return;
+      if(  yl > this.tableCells.length ) yl = this.tableCells.length;
+      for( ; y<yl; y++ ){
+        tc = this.tableCells[y];
+        xl=end.x+1
+        if(  xl > tc.length ) xl = tc.length;
+        for( x=start.x; x<xl; x++ ){
+          ic = tc[x];
+          ic.style.background = backgroundStyle;
+        }
+      }
+    };
+
+    this.styleEdges = function(start, end, borderStyle){
+      x=start.x, xl=end.x, y=start.y, yl=end.y;
+      var tc, tc2;
+      if( !this.tableCellContainers[y] ) return;
+      for( ; y<=yl; y++ ){
+        tc = this.tableCellContainers[y];
+        if( !tc ) break;
+        this.drawBorder(tc[x], 'left', borderStyle);
+        this.drawBorder(tc[xl], 'right', borderStyle);
+      }
+      y = start.y;
+      tc = this.tableCellContainers[y] || empty_permanent;
+      tc2 = this.tableCellContainers[yl] || empty_permanent;
+      for( ; x<=xl; x++ ){
+        this.drawBorder(tc[x], 'top', borderStyle);
+        this.drawBorder(tc2[x], 'bottom', borderStyle);
+      }
+    };
+
+    this.drawBorder = function(cell, side, borderStyle){
+      if( cell ) cell.style['border-'+side] = borderStyle;
+    };
+
+    console.log('xcellify safemode enabled');
   };
 
   this.validateStartCoord = function(c){
