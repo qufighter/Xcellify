@@ -22,7 +22,10 @@ var Xcellify = function(startupOptions){
   this.singleCellEditingMode = false;
   this.delimitCells = "\t";
   this.delimitRows = "\n";
+  this.tabReplacement = "     "; // when moving data outside of this editor, tab (aka this.delimitCells) support may need to be dropped (i.e replace tabs with spaces....), set to false to disable this "feature"
   this.hasFocus = 0;
+  this.quoteRex=null; //auto-computed
+  this.cellDelimitRex=null;
 
   this.resetState = function(){
     this.tableCellContainers = [];
@@ -584,7 +587,11 @@ var Xcellify = function(startupOptions){
   };
 
   this.quoteValue = function(v){
-    return '"'+v+'"';
+    if( this.tabReplacement ){
+      v = v.replace(this.cellDelimitRex, this.tabReplacement);
+    }
+    v = '"'+v+'"';
+    return v;
   };
 
   this.needsQuoting = function(v){
@@ -592,6 +599,7 @@ var Xcellify = function(startupOptions){
   };
 
   this.updateQuoteRex = function(){
+    this.cellDelimitRex = new RegExp(this.delimitCells,'g')
     this.quoteRex = new RegExp(this.delimitCells+'|'+this.delimitRows+'|"');
   };
 
