@@ -574,15 +574,37 @@ var Xcellify = function(startupOptions){
     return this.tableCells[y][x];
   }
 
+  this.getCellValueForCopy = function(x,y){
+    var v=this.getTableCellXY(x,y).value;
+    return this.quoteValueIfNeeded(v);
+  };
+
+  this.quoteValueIfNeeded = function(v){ // make sure this.updateQuoteRex was called if needed....
+    return this.needsQuoting(v) ? this.quoteValue(v) : v;
+  };
+
+  this.quoteValue = function(v){
+    return '"'+v+'"';
+  };
+
+  this.needsQuoting = function(v){
+    return v && v.match(this.quoteRex);
+  };
+
+  this.updateQuoteRex = function(){
+    this.quoteRex = new RegExp(this.delimitCells+'|'+this.delimitRows+'|"');
+  };
+
   this.getCurrentSelectionForCopy = function(){
+      this.updateQuoteRex();
       var start = this.selectionStart,
           end   = this.selectionEnd,
           clipb = '';
       for( y=start.y, yl=end.y+1; y<yl; y++ ){
         for( x=start.x, xl=end.x; x<xl; x++ ){
-          clipb += this.getTableCellXY(x,y).value+this.delimitCells;
+          clipb += this.getCellValueForCopy(x,y)+this.delimitCells;
         }
-        clipb += this.getTableCellXY(x,y).value+this.delimitRows; // last element in row gets \n instead of \t
+        clipb += this.getCellValueForCopy(x,y)+this.delimitRows; // last element in row gets \n instead of \t
       }
       return clipb;
   };
@@ -591,6 +613,16 @@ var Xcellify = function(startupOptions){
     if( this.activeCell ) return this.activeCell.selectionEnd - this.activeCell.selectionStart;
     return 0;
   };
+
+  this.activeCellValue = function(){
+    if( this.activeCell ) return this.activeCell.value;
+    return "";
+  };
+
+  this.getActiveCellSelectionValue = function(){
+    if( this.activeCell ) return this.activeCellValue().slice(this.activeCell.selectionStart, this.activeCell.selectionEnd);
+    return "";
+  }
 
   this.captureCellCopy = function(ev){
     var cursorSelSize = this.activeSelectionSize();
@@ -608,9 +640,15 @@ var Xcellify = function(startupOptions){
   this.prepareClipboardOverlay = function(ev){
     var selSize = this.selectionSize();
     var cursorSelSize = this.activeSelectionSize();
-    if( selSize.total != 1 || !cursorSelSize ){
-      // if we have more than one cell selected or if the current selection within the cell is empty, show copy area
+    if( selSize.total != 1 || !cursorSelSize || cursorSelSize == this.activeCellValue().length ){
+      // if we have more than one cell selected or if the current selection within the cell is empty, or complete, show copy area to capture entire cell as one unified entity...
       this.clipboardUtils.showArea(this.getCurrentSelectionForCopy());
+    }else if( selSize.total == 1 ){
+      var selValue = this.getActiveCellSelectionValue();
+      this.updateQuoteRex();
+      if( this.needsQuoting(selValue) ){
+        this.clipboardUtils.showArea(this.quoteValue(selValue));
+      }
     }
   };
 
@@ -623,6 +661,7 @@ var Xcellify = function(startupOptions){
   };
 
   this.assembleIndexedPaste = function(activeCell, v){ // designed to be over-ridden
+    v = this.valueForPastedCellData(v);
     var val = activeCell.value;
     var selPos = activeCell.selectionStart + v.length;
     var newValue = val.slice(0, activeCell.selectionStart) + v + val.slice(activeCell.selectionEnd, val.length);
@@ -630,14 +669,69 @@ var Xcellify = function(startupOptions){
     activeCell.setSelectionRange(selPos, selPos); // reset cursor position
   };
 
+  this.valueForPastedCellData = function(d){
+    if( d.charAt(0) == '"' ){
+      return d.substr(1,d.length-2).replace(/""/g,'"')
+    }else{
+      return d;
+    }
+  };
+
+  this.parsePasteData = function(ad){
+    if( ad.length && ad.charAt(ad.length-1) != this.delimitRows ){
+      ad += this.delimitRows; // it should end with one \n followed by nothing
+    }
+    var d, ld;
+    var lineStart=0;
+    var inQuotes = false;
+    var isQuote = false;
+    var isNewline = false;
+    var resultRows = [];
+    var resultCols = [];
+    var lastSliceEndedAt = 0;
+    for( var z=0,dl=ad.length+1; z<dl; z++ ){
+      d = ad.charAt(z); // could be over the end of string too
+      isQuote = ld == '"';
+      if( d == '"' && isQuote ){
+        // even if d is a \n or \t we will get to it soon enough....
+      }else{
+        if( inQuotes ){
+          if( isQuote ){
+            inQuotes = !inQuotes;
+          }
+        }else{
+          if( ld == this.delimitCells || (isNewline = (ld == this.delimitRows)) ){
+            resultCols.push( this.valueForPastedCellData(ad.slice(lastSliceEndedAt, z-1)) );
+            lastSliceEndedAt = z;
+            if( isNewline ){
+              resultRows.push(resultCols);
+              resultCols=[];
+              isNewline = false;
+            }
+          }else if( isQuote ){
+            inQuotes = !inQuotes;
+          }
+        }
+      }
+      ld = d;
+    }
+    if( resultCols.length > 0 ){
+      resultRows.push(resultCols);
+    }
+    if( resultRows.length < 1 ){
+      resultRows.push([this.valueForPastedCellData(ad)]);
+    }
+    return resultRows;
+  };
+
   this.valuesPasted = function(v){
     var pasted = [];
-    var rows = this.delimitRows ? v.split(this.delimitRows) : [v]; // it should end with one \n followed by nothing
+    var rows = this.parsePasteData(v);
     var rowCount = 0;
     for( r=0, x=1, rl=rows.length; r<rl; r++,x++ ){
       if( rows[r].length < 1 && x == rl ) continue; // this was to capture last row...
-      pasted[r] = [];
-      cells = this.delimitCells? rows[r].split(this.delimitCells) : [rows[r]];
+      pasted[r] = []; // we do not use rowCount here - likely with great intention of representing what was copied
+      cells = rows[r];
       for( c=0, cl=cells.length; c<cl; c++ ){
         pasted[r][c] = cells[c];
       }
