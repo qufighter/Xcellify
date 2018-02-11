@@ -590,7 +590,7 @@ var Xcellify = function(startupOptions){
     if( this.tabReplacement ){
       v = v.replace(this.cellDelimitRex, this.tabReplacement);
     }
-    v = '"'+v+'"';
+    v = '"'+v.replace(/"/g,'""')+'"';
     return v;
   };
 
@@ -702,6 +702,7 @@ var Xcellify = function(startupOptions){
       isQuote = ld == '"';
       if( d == '"' && isQuote ){
         // even if d is a \n or \t we will get to it soon enough....
+        inQuotes = !inQuotes;
       }else{
         if( inQuotes ){
           if( isQuote ){
