@@ -389,20 +389,21 @@ var Xcellify = function(startupOptions){
     }
   };
 
+  this.selectionDelayMs=33;
   this.selectionDelay=null;
   this.deferredCellSelection = function(currentPosition){
     clearTimeout(this.selectionDelay);
     this.selectionDelay = setTimeout(function(){
       this.selectBoxedCells(this.dragOrigin, currentPosition);
-    }.bind(this),33);
-  }
+    }.bind(this),this.selectionDelayMs);
+  };
 
   this.mouseMovedProcessor = function(evcell){
     if( !evcell ) return;
     var currentPosition;
     if( !this.hasClass(evcell, this.cellInputClassName) ){
       if( this.hasClass(evcell, this.headingClassName) ){
-        this.deferredCellSelection(this.cellPosition(evcell))
+        this.deferredCellSelection(this.cellPosition(evcell));
       }
       return; // in case user is still dragging, do not cancel until the mouse returns
     }else{
@@ -582,7 +583,7 @@ var Xcellify = function(startupOptions){
 
   this.getTableCellXY = function(x,y){
     return this.tableCells[y][x];
-  }
+  };
 
   this.getCellValueForCopy = function(x,y){
     var v=this.getTableCellXY(x,y).value;
@@ -606,7 +607,7 @@ var Xcellify = function(startupOptions){
   };
 
   this.updateQuoteRex = function(){
-    this.cellDelimitRex = new RegExp(this.delimitCells,'g')
+    this.cellDelimitRex = new RegExp(this.delimitCells,'g');
     this.quoteRex = new RegExp(this.delimitCells+'|'+this.delimitRows+'|"');
   };
 
@@ -637,7 +638,7 @@ var Xcellify = function(startupOptions){
   this.getActiveCellSelectionValue = function(){
     if( this.activeCell ) return this.activeCellValue().slice(this.activeCell.selectionStart, this.activeCell.selectionEnd);
     return "";
-  }
+  };
 
   this.captureCellCopy = function(ev){
     var cursorSelSize = this.activeSelectionSize();
@@ -686,7 +687,7 @@ var Xcellify = function(startupOptions){
 
   this.valueForPastedCellData = function(d){
     if( d.charAt(0) == '"' ){
-      return d.substr(1,d.length-2).replace(/""/g,'"')
+      return d.substr(1,d.length-2).replace(/""/g,'"');
     }else{
       return d;
     }
@@ -868,7 +869,7 @@ var Xcellify = function(startupOptions){
     this.getTableCellXY = function(x,y){
       var row = this.tableCells[y] || empty_permanent;
       return row[x] || empty_permanent;
-    }
+    };
 
     this.styleCells = function(start, end, backgroundStyle){
       // this is completely optional and is still safe without override, should be faster than default function and getTableCellXY
@@ -878,7 +879,7 @@ var Xcellify = function(startupOptions){
       if(  yl > this.tableCells.length ) yl = this.tableCells.length;
       for( ; y<yl; y++ ){
         tc = this.tableCells[y];
-        xl=end.x+1
+        xl=end.x+1;
         if( xl > tc.length ) xl = tc.length;
         for( x=start.x; x<xl; x++ ){
           ic = tc[x];
