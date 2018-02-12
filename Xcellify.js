@@ -389,13 +389,20 @@ var Xcellify = function(startupOptions){
     }
   };
 
+  this.selectionDelay=null;
+  this.deferredCellSelection = function(currentPosition){
+    clearTimeout(this.selectionDelay);
+    this.selectionDelay = setTimeout(function(){
+      this.selectBoxedCells(this.dragOrigin, currentPosition);
+    }.bind(this),33);
+  }
+
   this.mouseMovedProcessor = function(evcell){
     if( !evcell ) return;
     var currentPosition;
     if( !this.hasClass(evcell, this.cellInputClassName) ){
       if( this.hasClass(evcell, this.headingClassName) ){
-        currentPosition = this.cellPosition(evcell);
-        this.selectBoxedCells(this.dragOrigin, currentPosition);
+        this.deferredCellSelection(this.cellPosition(evcell))
       }
       return; // in case user is still dragging, do not cancel until the mouse returns
     }else{
@@ -409,7 +416,7 @@ var Xcellify = function(startupOptions){
             singleCellEditingMode=true; // allow return to single editing mode on accidental multi box select
           }
         }
-        this.boxCells(this.dragOrigin, currentPosition); // if single editing this is superfluous
+        this.deferredCellSelection(currentPosition); // if single editing this is superfluous
       }
     }
   };
