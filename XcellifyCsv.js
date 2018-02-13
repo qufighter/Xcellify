@@ -6,7 +6,8 @@
 function parseCsvWithXcellify(csvData){
   var xfy = new Xcellify({
     containerElm: document.createElement('div'), // you may be able to use Cr.elm('div') for node.js
-    delimitCells:',' // Modifying .delimitCells TEMPORARILY on an instance to be ',' should make it function as a CSV parser. (or writer for that matter (see getCurrentSelectionForCopy)) Set delimitCells back or you break clipboard interoperability on the instance.
+    tabReplacement: false,
+    delimitCells:',' // Modifying .delimitCells TEMPORARILY on an instance to be ',' should make it function as a CSV parser. (or writer for that matter (see getCurrentSelectionForCopy)) Set delimitCells and tabReplacement back or you break clipboard interoperability on the instance.
   });
   var resultLines = xfy.parsePasteData(csvData), resultLine; // parsePasteData handles double double quoting pretty good for tab and newline delimited data.
   var  maxCols = 0, l, ln;

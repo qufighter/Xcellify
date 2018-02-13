@@ -58,6 +58,7 @@ var Xcellify = function(startupOptions){
     this.historyUtils.applyStateFn = this.applyHistoryState.bind(this);
     this.historyUtils.storeStateFn = this.storeStateInHistory.bind(this);
     this.clipboardUtils.copyAreaSelector = this.copyAreaSelector;
+    this.updateQuoteRex();
   };
 
   this.destroy = function(){ // not needed as long as container element stays the same and remains in the DOM, in which case you may call rebuildIndex if the table changes
