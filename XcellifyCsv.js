@@ -28,6 +28,7 @@ var XcellifyCsv = (function (){
     instance: _xfy,
 
     parse: function (csvData){
+      csvData = csvData.replace(/^\s+|\s+$/g,'');
       var resultLines = _xfy.parsePasteData(csvData), resultLine; // parsePasteData handles double double quoting pretty good for tab and newline delimited data.
       var  maxCols = 0, l, ln;
       for( l=0,ln=resultLines.length; l < ln; l++ ){
