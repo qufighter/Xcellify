@@ -211,7 +211,8 @@ var Xcellify = function(startupOptions){
   };
 
   this.determineIfFocused = function(ev){
-    if( this.findMatchingParent(ev.target, this.rowSelector) ||
+    var inputField = ev.target;
+    if( (this.hasClass(inputField, 'xcellinput') && this.findMatchingParent(ev.target, this.rowSelector)) ||
         this.findMatchingParent(ev.target, this.copyAreaSelector) ||
         (this.clipboardUtils.lastArea && ev.target == this.clipboardUtils.lastArea) ){
       this.hasFocus = 1;
