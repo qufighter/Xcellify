@@ -193,6 +193,7 @@ var Xcellify = function(startupOptions){
     this.attachListener(document, 'keydown', this.keyboardDnEvents.bind(this));
     this.attachListener(document, 'keyup', this.keyboardUpEvents.bind(this));
     this.attachListener(document, 'focus', this.determineIfFocused.bind(this), true);
+    this.attachListener(document, 'click', this.checkIfFocusLost.bind(this));
   };
 
   this._attachedListeners = [];
@@ -209,6 +210,14 @@ var Xcellify = function(startupOptions){
     }
     this._attachedListeners = [];
   };
+
+  this.checkIfFocusLost = function(ev){
+    if( !this.isDescendentOfContainer(ev.target) && (!this.copyAreaSelector || !this.findMatchingParent(ev.target, this.copyAreaSelector)) ){
+      this.hasFocus = 0;
+    }else{
+      //this.hasFocus = 1; // really not intended to re-gain focus via clicks.... but it could be helpful....
+    }
+  }
 
   this.determineIfFocused = function(ev){
     var inputField = ev.target;
@@ -445,6 +454,17 @@ var Xcellify = function(startupOptions){
     }
     return evcell;
   };
+
+  this.isDescendentOfContainer = function(child){
+    child = child.parentNode;
+    while( child ){
+      if( child == this.containerElm ){
+        return true;
+      }
+      child = child.parentNode;
+    }
+    return false;
+  }
 
   this.findMatchingParent = function(child, selector){
     while( child && ! child.matches(selector)  ){ // use of .matches here might need some compatibility // https://developer.mozilla.org/en-US/docs/Web/API/Element/matches
