@@ -26,8 +26,11 @@ var Xcellify = function(startupOptions){
   this.hasFocus = 0;
   this.quoteRex=null; //auto-computed
   this.cellDelimitRex=null;
+  // override expandTableRows with a function that will add rows to facilitate paste of longer data sets than available cells
+  this.expandTableRows = function(rows_needed){ console.warn('Xcellify: implement expandTableRows to facilitate paste of ' + rows_needed + ' additional rows  and then call [your Xcellify instance].rebuildIndex(true)...');}
+  this.columnResizer = function(_this){ }; // see ColumnSizeHelper.js
 
-  this.resetState = function(){
+  this.resetState = function(keep_selections){
     this.tableCellContainers = [];
     this.fullGrid = [];
     this.tableCells = [];
@@ -36,11 +39,13 @@ var Xcellify = function(startupOptions){
     this.activeCellIndex = {x: 0, y: 0};
     this.isDragging = false;
     this.dragOrigin = {x: 0, y: 0}; // x = col, y = row
-    this.selectionStart = {x: 0, y: 0};
-    this.selectionEnd = {x: 0, y: 0};
-    this.copySelectionStart = {x: 0, y: 0};
-    this.copySelectionEnd = {x: 0, y: 0};
-    this.curSelectionisCopySel = false;
+    if(!keep_selections){
+      this.selectionStart = {x: 0, y: 0};
+      this.selectionEnd = {x: 0, y: 0};
+      this.copySelectionStart = {x: 0, y: 0};
+      this.copySelectionEnd = {x: 0, y: 0};
+      this.curSelectionisCopySel = false;
+    }
   };
 
   this.resetState();
@@ -138,13 +143,13 @@ var Xcellify = function(startupOptions){
   };
 
   // call this function whenever the table dom has been modified in a way that there is now a new spreadsheet or new visibility of cells/rows, update all cell references.
-  this.rebuildIndex = function(){
+  this.rebuildIndex = function(keep_selections){
     //before rebuilding index we can try to clear previous selection, but only if there was a previous index
     if( this.tableCells[0] && this.tableCells[0].length ){
       this.hideCurrentSelection();
       this.hideCopySelection();
     }
-    this.resetState();
+    this.resetState(keep_selections);
     this.getGrid(); // if grid size changed we may need to zap history states we have since they might apply no longer
     this.setupHeadings();
 
@@ -173,6 +178,7 @@ var Xcellify = function(startupOptions){
       }
     }
     this.totalDimensions = {x: this.tableCells[0] ? this.tableCells[0].length-1 : 0, y: y-1};
+    this.columnResizer(this);
   };
 
   this.setupButtonBar = function(){
@@ -233,9 +239,18 @@ var Xcellify = function(startupOptions){
   this.keyboardDnEvents = function(ev){
     if( !this.hasFocus || !this.elementIsVisible(this.containerElm) || this.totalDimensions.x < 0 || this.totalDimensions.y < 0 ) return;
     if( ev.metaKey || ev.ctrlKey ){ // command/control
+      if( ev.shiftKey || ev.altKey ){
+        // stacking modifier-keys should exit too
+        this.clipboardUtils.hideArea();
+        return;
+      }
       switch(ev.keyCode){
         case 67: // C key - Copy
           this.captureCellCopy(ev);
+          return;
+        case 70: // F key - Find dialogue
+        case 80: // P key - Print dialogue
+          this.clipboardUtils.hideArea();
           return;
         case 86: // V key - Paste
           this.applyCellPaste();
@@ -267,13 +282,18 @@ var Xcellify = function(startupOptions){
           this.clipboardUtils.hideArea();
           return;
         case 46: // Delete key - Clear Cells
-          this.setValueMultiCell(this.selectionStart, this.selectionEnd, ''); 
+          var selSize = this.selectionSize();
+          if(selSize.total > 1){
+              this.setValueMultiCell(this.selectionStart, this.selectionEnd, '');
+          }
           return;
         case 9: // Tab key already moves cells to right, but now we save state on each key press
           this.storeStateInHistory();
           return;
         case 13: // Enter key - move to next cell
-          this.moveToNextCell();
+          if(ev.target.nodeName != 'TEXTAREA'){
+              this.moveToNextCell();
+          }
           return;
       }
     }
@@ -789,6 +809,10 @@ var Xcellify = function(startupOptions){
       this.selectionConfirmation(selSize, {x: cl, y: rowCount}, function(){
         pasted = _this.replicatePaste(pasted, selSize);
       });
+    }
+    if(this.selectionStart.y + pasted.length > this.fullGrid.length){
+        var needed_rows = (this.selectionStart.y + pasted.length) - this.fullGrid.length;
+        this.expandTableRows(needed_rows);
     }
     if( pasted[0] ){
       this.hideCurrentSelection();

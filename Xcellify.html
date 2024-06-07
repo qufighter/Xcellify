@@ -9,9 +9,14 @@ body{font-family:sans-serif;}
 
 /* you need these classes for the table to render properly */
 .row{white-space: nowrap;}
-.cell{display:inline-block;border:2px solid #999;width:150px;min-height:24px;max-height:24px;height:24px;vertical-align: top;position:relative;}
+.cell{display:inline-block;border:2px solid #999;width:150px;min-height:24px;max-height:24px;height:24px;vertical-align: top;position:relative;box-sizing:content-box}
 .cell input{border:none;padding:5px;padding-left:15px;width:100%;}
-
+.headingasinput{
+	margin: 0;
+    box-sizing: content-box;
+    padding: 0 0;
+    height: 30px;
+}
 
 .cellheading{font-weight:bold;}
 #configKey{margin-bottom:10px;}
@@ -19,7 +24,11 @@ body{font-family:sans-serif;}
 	<script src="Cr.js"></script>
 	<script src="Xcellify.js"></script>
 	<script src="HighlightClass.js"></script>
+	<script src="XcellifyColumnSizeHelper.js"></script>
 	<script type="text/javascript">
+
+
+
 
 		var containerId = "xcellTable";
 		var headingText = "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEF";
@@ -32,14 +41,27 @@ body{font-family:sans-serif;}
 
 			rowElm = Cr.elm('div',{class:"headingrow row xcellrow"},[],conainerElm);
 
+			// var heading = XcellifyColumnSizeHelper.columnHeading('Select All', '');
+			// heading.setAttribute('data-col', c);
+			// heading.setAttribute('data-col-search', headingText.substr(c,3));
+			// heading.addEventListener('click', selectAll)
+			// rowElm.appendChild(heading);
+
+
 			Cr.elm('div',{class:"cell cellheading",  event:['click', selectAll]},[
 				Cr.elm('div',{},[Cr.txt("Select All")])
 			],rowElm);
 
 			for( c=0; c<cols; c++ ){
-				Cr.elm('div',{class:"cell cellheading xcellheading", 'data-col':c, 'data-col-search':headingText.substr(c,3)},[
-					Cr.elm('div',{},[Cr.txt(headingText.substr(c,3) + ' ('+c+')')])
-				],rowElm);
+				heading = XcellifyColumnSizeHelper.columnHeading(headingText.substr(c,3) + ' ('+c+')', 'cell cellheading xcellheading headingasinput');
+				heading.setAttribute('data-col', c);
+				heading.setAttribute('data-col-search', headingText.substr(c,3));
+				rowElm.appendChild(heading);
+
+
+				 // Cr.elm('div',{class:"cell cellheading", 'data-col':c, 'data-col-search':headingText.substr(c,3)},[
+				 // 	XcellifyColumnSizeHelper.columnHeading(headingText.substr(c,3) + ' ('+c+')', 'xcellheading')
+				 // ],rowElm);
 			}
 
 			for( r=0; r<rows; r++ ){
@@ -124,6 +146,9 @@ body{font-family:sans-serif;}
 				copyAreaSelector: '#copyArea',
 				buttonBar: document.getElementById('xcellButtonBar') // optional button bar already in your HTML, supported buttons: span.undo span.redo
 			});
+
+			XcellifyColumnSizeHelper.init(xcellController);
+
 
 			document.getElementById('colSearch').addEventListener('change', searchColumns);
 			document.getElementById('rowSearch').addEventListener('change', searchRows);
